@@ -58,7 +58,7 @@ def tile_floating_windows(workspace_id):
     """Guarda posiciones y pone en mosaico todas las flotantes del workspace."""
     windows = get_floating_windows(workspace_id)
     if not windows:
-        print("No hay ventanas flotantes en el workspace activo.")
+        print("Tidak ada jendela floating di workspace aktif.")
         return False
 
     positions = {}
@@ -76,7 +76,7 @@ def tile_floating_windows(workspace_id):
     state[str(workspace_id)] = positions
     save_state(state)
 
-    print(f"Guardadas {len(positions)} ventanas. Tileando...")
+    print(f"Menyimpan posisi {len(positions)} jendela. Mengubah ke tiling...")
 
     exprs = [toggle_floating_lua(addr) for addr in positions]
     batch(exprs, timeout=5)
@@ -89,7 +89,7 @@ def restore_floating_windows(workspace_id):
     positions = state.get(str(workspace_id))
 
     if not positions:
-        print("No hay posiciones guardadas para este workspace.")
+        print("Tidak ada posisi tersimpan untuk workspace ini.")
         return False
 
     # Obtener ventanas que deben restaurarse
@@ -103,7 +103,7 @@ def restore_floating_windows(workspace_id):
             and w["address"] in positions
         ]
 
-    print(f"Restaurando {len(tiled)} ventanas a flotante...")
+    print(f"Mengembalikan {len(tiled)} jendela ke floating...")
 
     toggle_exprs = [toggle_floating_lua(w["address"]) for w in tiled if not w.get("floating")]
     if toggle_exprs:
@@ -147,10 +147,10 @@ def float_all_tiled(workspace_id):
     ]
 
     if not tiled:
-        print("No hay ventanas tileadas en el workspace activo.")
+        print("Tidak ada jendela tiling di workspace aktif.")
         return False
 
-    print(f"Poniendo {len(tiled)} ventanas en flotante...")
+    print(f"Mengubah {len(tiled)} jendela menjadi floating...")
     exprs = [toggle_floating_lua(w["address"]) for w in tiled]
     batch(exprs, timeout=5)
 
@@ -163,13 +163,13 @@ def main():
     try:
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        print("Otra instancia ya está corriendo, ignorando.")
+        print("Instans lain sedang berjalan, melewati proses.")
         sys.exit(0)
 
     try:
         workspace_id = get_active_workspace()
         if workspace_id is None:
-            print("Error: no se pudo obtener el workspace activo.")
+            print("Error: gagal membaca workspace aktif.")
             sys.exit(1)
 
         if is_tiled_state(workspace_id):

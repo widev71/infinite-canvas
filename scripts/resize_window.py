@@ -21,7 +21,7 @@ MIN_SIZE = 100  # tamaño mínimo para no colapsar la ventana
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("left", "right", "up", "down"):
-        print("Uso: resize_window.py <left|right|up|down>")
+        print("Penggunaan: resize_window.py <left|right|up|down>")
         sys.exit(1)
 
     direction = sys.argv[1]

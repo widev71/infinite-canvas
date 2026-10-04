@@ -82,10 +82,10 @@ if not mouse_found:
     print('')
 ")
 
-# Verificar detección
+# Verifikasi deteksi
 if [ -z "$KBD_DEV" ]; then
-    echo "❌ Error: No se pudo detectar el teclado" >&2
-    echo "Dispositivos de teclado encontrados:" >&2
+    echo "❌ Error: Keyboard tidak dapat dideteksi" >&2
+    echo "Perangkat keyboard yang ditemukan:" >&2
     for dev in /dev/input/event*; do
         name=$(cat "/sys/class/input/$(basename $dev)/device/name" 2>/dev/null)
         if echo "$name" | grep -qi "keyboard\|kbd"; then
@@ -96,8 +96,8 @@ if [ -z "$KBD_DEV" ]; then
 fi
 
 if [ -z "$MOUSE_DEV" ]; then
-    echo "Error: No se pudo detectar el ratón" >&2
-    echo "Dispositivos de ratón encontrados:" >&2
+    echo "❌ Error: Mouse tidak dapat dideteksi" >&2
+    echo "Perangkat mouse yang ditemukan:" >&2
     for dev in /dev/input/event*; do
         name=$(cat "/sys/class/input/$(basename $dev)/device/name" 2>/dev/null)
         if echo "$name" | grep -qi "mouse\|optical"; then
@@ -107,11 +107,11 @@ if [ -z "$MOUSE_DEV" ]; then
     exit 1
 fi
 
-echo "Detectados: teclado=$KBD_DEV ratón=$MOUSE_DEV"
+echo "✅ Terdeteksi: keyboard=$KBD_DEV mouse=$MOUSE_DEV"
 
-# Verificación de seguridad
+# Verifikasi keamanan
 if [ "$KBD_DEV" = "$MOUSE_DEV" ]; then
-    echo "ERROR: Teclado y ratón son el mismo dispositivo" >&2
+    echo "❌ ERROR: Keyboard dan mouse terdeteksi sebagai perangkat yang sama" >&2
     exit 1
 fi
 

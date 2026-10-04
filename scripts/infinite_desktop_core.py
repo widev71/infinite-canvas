@@ -291,7 +291,7 @@ def move_active_window(direction):
             pan_other_windows(addr, -dx, -dy, workspace_id)
 
     except Exception as e:
-        print(f"Error en move_active_window: {e}", flush=True)
+        print(f"Error di move_active_window: {e}", flush=True)
 
 
 def classify_device(path):
@@ -452,7 +452,7 @@ def device_manager():
                     nt = threading.Thread(target=kbd_reader_device, args=(path,), daemon=True)
                     nt.start()
                     _active_kbd_threads[path] = nt
-                    print(f"[+] Teclado detectado: {path}", flush=True)
+                    print(f"[+] Keyboard terdeteksi: {path}", flush=True)
 
             for path in mice:
                 t = _active_mouse_threads.get(path)
@@ -460,16 +460,16 @@ def device_manager():
                     nt = threading.Thread(target=mouse_reader_device, args=(path,), daemon=True)
                     nt.start()
                     _active_mouse_threads[path] = nt
-                    print(f"[+] Mouse detectado: {path}", flush=True)
+                    print(f"[+] Mouse terdeteksi: {path}", flush=True)
         except Exception as e:
-            print(f"Error en device_manager: {e}", flush=True)
+            print(f"Error di device_manager: {e}", flush=True)
 
         elapsed = time.time() - start_time
         interval = WARMUP_INTERVAL if elapsed < WARMUP_DURATION else DEVICE_RESCAN_INTERVAL
         time.sleep(interval)
 
-# PRECARGAR
-print("Precargando...", flush=True)
+# PRELOAD
+print("Memuat awal (preloading)...", flush=True)
 try:
     subprocess.run(['hyprctl', 'activeworkspace', '-j'], capture_output=True, text=True, timeout=0.5)
     subprocess.run(['hyprctl', 'clients', '-j'], capture_output=True, text=True, timeout=0.5)
@@ -478,11 +478,11 @@ except:
 
 threading.Thread(target=device_manager, daemon=True).start()
 threading.Thread(target=monitor_window_drag, daemon=True).start()
-print("Infinite Desktop activo (deteccion automatica de dispositivos)", flush=True)
-print("Super+click: Arrastrar ventana (al tocar borde, el raton mueve el resto)", flush=True)
-print("Super+Alt+mouse: Arrastrar todo el escritorio", flush=True)
-print("Super+flechas: Navegacion via hyprland bind", flush=True)
-print("Super+Shift+flechas: Mover ventana activa via hyprland bind", flush=True)
+print("Infinite Desktop aktif (deteksi perangkat otomatis)", flush=True)
+print("Super+Klik: Seret jendela (saat menyentuh tepi layar, mouse menggeser kanvas desktop)", flush=True)
+print("Super+Alt+Mouse: Seret seluruh kanvas desktop", flush=True)
+print("Super+Panah: Navigasi jendela via hyprland bind", flush=True)
+print("Super+Shift+Panah: Geser jendela aktif via hyprland bind", flush=True)
 
 # Caché del workspace activo (se refresca cada 2s para no llamar hyprctl cada frame)
 _cached_workspace_id = None
@@ -503,40 +503,69 @@ def get_cached_workspace_id():
             pass
     return _cached_workspace_id
 
+# Variables for inertia and caching
+velocity_x = 0.0
+velocity_y = 0.0
+drag_active_previous = False
+cached_windows = []
+
 # Loop principal para arrastre de escritorio
 while True:
     time.sleep(0.016)
 
     with lock:
         active_drag = super_pressed and alt_pressed
-        dx = acc_x
-        dy = acc_y
+        input_dx = acc_x
+        input_dy = acc_y
         acc_x = 0.0
         acc_y = 0.0
 
-    if not active_drag:
+    if active_drag:
+        velocity_x = input_dx
+        velocity_y = input_dy
+
+        if not drag_active_previous:
+            drag_active_previous = True
+            try:
+                workspace_id = get_cached_workspace_id()
+                if workspace_id is not None:
+                    r = subprocess.run(['hyprctl', 'clients', '-j'], capture_output=True, text=True, timeout=0.1)
+                    clients = json.loads(r.stdout)
+                    cached_windows = []
+                    for w in clients:
+                        if w.get('floating') and w.get('workspace', {}).get('id') == workspace_id:
+                            cached_windows.append({
+                                'address': w['address'],
+                                'x': float(w['at'][0]),
+                                'y': float(w['at'][1])
+                            })
+            except Exception:
+                cached_windows = []
+    else:
+        drag_active_previous = False
+        velocity_x *= 0.85  # friction factor
+        velocity_y *= 0.85
+
+        if abs(velocity_x) < 0.1 and abs(velocity_y) < 0.1:
+            velocity_x = 0.0
+            velocity_y = 0.0
+            cached_windows = []
+            continue
+
+    if velocity_x == 0.0 and velocity_y == 0.0:
         continue
 
-    idx = int(round(dx))
-    idy = int(round(dy))
-
-    if idx == 0 and idy == 0:
+    if not cached_windows:
         continue
 
     try:
-        workspace_id = get_cached_workspace_id()
-        if workspace_id is None:
-            continue
-
-        r = subprocess.run(['hyprctl', 'clients', '-j'], capture_output=True, text=True, timeout=0.1)
-        clients = json.loads(r.stdout)
-
         exprs = []
-        for w in clients:
-            if w.get('floating') and w.get('workspace', {}).get('id') == workspace_id:
-                nx = w['at'][0] + idx
-                ny = w['at'][1] + idy
-                exprs.append(move_window_exact_lua(nx, ny, w['address']))
+        for w in cached_windows:
+            w['x'] += velocity_x
+            w['y'] += velocity_y
+            nx = int(round(w['x']))
+            ny = int(round(w['y']))
+            exprs.append(move_window_exact_lua(nx, ny, w['address']))
 
         batch_async(exprs)
     except Exception as e:

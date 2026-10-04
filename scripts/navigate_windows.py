@@ -132,7 +132,7 @@ def pan_to_window(floating, target_addr, center_x, center_y):
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("left", "right", "up", "down"):
-        print("Uso: navigate_windows.py <left|right|up|down>")
+        print("Penggunaan: navigate_windows.py <left|right|up|down>")
         sys.exit(1)
 
     direction = sys.argv[1]

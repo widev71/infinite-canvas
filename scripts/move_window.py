@@ -40,7 +40,7 @@ def get_floating_windows(workspace_id):
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("left", "right", "up", "down"):
-        print("Uso: move_window.py <left|right|up|down>")
+        print("Penggunaan: move_window.py <left|right|up|down>")
         sys.exit(1)
 
     direction = sys.argv[1]

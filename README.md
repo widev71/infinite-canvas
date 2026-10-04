@@ -1,155 +1,159 @@
-# hyprland-infinite-desktop-v2
-A powerful script to transform your Hyprland workspace into an "infinite" canvas. This tool allows you to pan all floating windows simultaneously using your mouse and navigate between them with keyboard shortcuts, creating a dynamic and boundless desktop experience.
-<img width="1920" height="1080" alt="20260509_18h26m44s_grim" src="https://github.com/user-attachments/assets/464fa371-7cc4-4fd5-a06c-55d7b51ba59d" />
+# 🌌 Hyprland Infinite Desktop v2
 
+Skrip cerdas untuk mengubah workspace **Hyprland** Anda menjadi sebuah **kanvas tanpa batas (Infinite Canvas)** ala Miro/Figma. Seluruh jendela *floating* dapat digeser secara bersamaan (*panning*) menggunakan mouse, bernavigasi mulus antar-jendela dengan keyboard, serta mendukung inersia gerak yang halus dan sistem shortcut anti-bentrok.
 
-## 🚀 Features
+<img width="1920" height="1080" alt="Hyprland Infinite Desktop Preview" src="https://github.com/user-attachments/assets/464fa371-7cc4-4fd5-a06c-55d7b51ba59d" />
 
--Infinite Panning: Move the entire "canvas" of floating windows by holding a modifier combination and moving your mouse.
+---
 
--Smart Navigation: Cycle focus between floating windows
+## 🚀 Fitur Utama
 
-## New features
+- **🌊 Infinite Canvas Panning:** Geser seluruh kanvas desktop hanya dengan menahan tombol modifier dan menggerakkan mouse.
+- **⚡ Smooth Inertia & Momentum:** Kanvas meluncur mulus dengan perlambatan gesekan alami saat dilepas.
+- **🎯 Recenter / Home View:** Kembalikan seluruh jendela ke tengah layar secara instan jika tergeser terlalu jauh.
+- **🔄 Toggle Tiling & Floating:** Beralih antara mode kanvas bebas (*floating*) dan mode susun rapi (*tiling*) dengan posisi jendela yang tersimpan otomatis.
+- **🧭 Navigasi Cerdas:** Pindah fokus sekaligus memusatkan kamera monitor langsung ke jendela target.
+- **⌨️ Pusat Shortcut Tunggal:** Seluruh kombinasi tombol terpusat di `~/scripts/infinite-shortcuts.lua` dengan kombinasi **3+ tombol modifier** sehingga **100% bebas bentrok** dari keybind bawaan distro.
+- **🌐 Berbahasa Indonesia:** Seluruh pesan diagnostik, installer, dan log runtime ramah Bahasa Indonesia.
 
--Now works in LUA (Hyprland 0.55+).
+---
 
--Toggle tiling floating/layout.
+## 📋 Apa yang Harus Disiapkan? (Prasyarat)
 
--Rezize and move windows without mouse.
+Sebelum memasang, pastikan sistem Anda memenuhi kebutuhan berikut:
 
--Better navigation.
+1. **Lingkungan Desktop:** Linux dengan compositor **Hyprland** (disarankan v0.55+ dengan konfigurasi `hyprland.lua` atau dukungan soket IPC).
+2. **Paket Ketergantungan:**
+   - `python3` (penerjemah kode utama)
+   - `python-evdev` (pembaca input perangkat mouse/keyboard tingkat rendah)
+   - `bash` (shell interpreter)
+   - `jq` (pemroses JSON data Hyprland)
+3. **Izin Grup Perangkat (`input` group):** User Anda harus terdaftar di dalam grup sistem `input` agar skrip Python memiliki izin membaca pergerakan mouse/keyboard tanpa memerlukan akses root.
 
+---
 
-## 📥 Installation
+## ⚠️ Apa yang TIDAK Boleh Dilakukan? (PENTING!)
 
-# Automatic:
+Harap perhatikan pantangan berikut agar sistem Anda tidak mengalami error:
 
-1. **Download the file named "Install hyprland infinite desktop" into the "~/" directory (Home/USER/).**
-   
-2. **Run the following commands:**
+1. ❌ **JANGAN jalankan installer dengan `sudo` langsung (`sudo ./install...`)!**
+   * *Alasan:* Jika dijalankan sebagai root, file akan dipasang di `/root/scripts/` bukan di `/home/user/scripts/`, dan hak milik file akan kacau. Jalankan sebagai user biasa: `./install-hyprland-infinite-desktop.sh`. Skrip otomatis meminta password `sudo` jika perlu menginstal paket.
+2. ❌ **JANGAN lupa Log Out atau Restart setelah instalasi!**
+   * *Alasan:* Linux memerlukan pembaruan sesi agar penambahan user ke grup `input` mulai berlaku. Jika belum restart/log out, Anda akan menemui error *Permission Denied* pada evdev.
+3. ❌ **JANGAN hapus atau ubah nama folder `~/scripts` sembarangan!**
+   * *Alasan:* Konfigurasi `hyprland.lua` memanggil skrip dari path absolut `~/scripts/`. Jika dipindahkan, Hyprland tidak akan menemukan skripnya.
+4. ❌ **JANGAN gunakan shortcut 1-2 tombol umum jika mengubah keybind!**
+   * *Alasan:* Shortcut seperti `SUPER + 1..9`, `SUPER + D`, atau `SUPER + Panah` adalah tombol bawaan sistem operasi. Gunakan minimal 3 modifier (contoh: `SUPER + CTRL + ALT + ...`) untuk mencegah bentrok fungsi.
+
+---
+
+## 📥 Langkah-Langkah Penginstalan
+
+### Metode 1: Otomatis (Sangat Direkomendasikan)
+
+Installer lokal akan mendeteksi distro Anda, menginstal paket dependensi, menambahkan user ke grup `input`, menyalin skrip lokal ke `~/scripts/`, dan mendaftarkan autostart ke konfigurasi Hyprland:
+
+1. **Kloning repositori dan masuk ke direktori:**
    ```bash
-   chmod +x install-hyprland-infinite-desktop.sh
+   git clone https://github.com/widev71/infinite-canvas.git
+   cd infinite-canvas
    ```
 
+2. **Berikan izin eksekusi dan jalankan installer:**
    ```bash
+   chmod +x install-hyprland-infinite-desktop.sh
    ./install-hyprland-infinite-desktop.sh
    ```
 
-3. **Read the changes in hyprland.lua carefully (they are printed at the end of the script).**
+3. **Restart sesi Anda:**
+   ```bash
+   reboot
+   ```
+   *(Atau cukup Log Out dan Login kembali agar izin grup input aktif).*
 
-4. **Reboot your system**
+---
 
+### Metode 2: Manual
 
-# Manual:
+Jika Anda ingin mengatur semuanya secara manual tanpa skrip otomatis:
 
-1. **Requirements**
-   You need Python 3, jq, bash, python-evdev installed on your system.
-
-   ### Installation by Distribution:
-
+1. **Instal paket sesuai distro Anda:**
    * **Arch Linux:**
      ```bash
-     sudo pacman -S python python-evdev bash jq
+     sudo pacman -S --needed python python-evdev bash jq
      ```
-
-   *For Fedora or Debian-based distributions, make sure you have the latest version of Hyprland compiled or installed.*
-
    * **Fedora:**
      ```bash
-     sudo dnf install python python-evdev bash jq
+     sudo dnf install -y python python-evdev bash jq
      ```
    * **Ubuntu / Debian:**
      ```bash
-     sudo apt install python python-evdev bash jq
+     sudo apt update && sudo apt install -y python3 python3-evdev bash jq
      ```
 
-2. **Permissions**
-
-   Add your user to the group:
+2. **Tambahkan user Anda ke grup `input`:**
    ```bash
    sudo usermod -aG input $USER
    ```
 
-   Restart your session:
-   ```bash
-   sudo reboot
-   ```
-
-3. **Create the directory:**
-   All scripts must be stored in a dedicated folder in your home directory:
+3. **Buat direktori dan salin skrip:**
    ```bash
    mkdir -p ~/scripts
-   ```
-4. **Download the scripts:**
-   Place all scripts (.py and .sh) inside ~/scripts/
-
-5. **Grant execution permissions:**
-   ```bash
-   chmod +x ~/scripts/infinite-desktop.sh ~/scripts/floating_tile_toggle.py ~/scripts/move_window_tiled.py ~/scripts/navigate_windows.py ~/scripts/resize_window.py
+   cp scripts/*.py scripts/*.sh scripts/*.lua ~/scripts/
+   chmod +x ~/scripts/*.sh ~/scripts/*.py
    ```
 
-## ⚙️ Configuration (for manual installation)
-Add the following lines to your ~/.config/hypr/hyprland.lua:
-
-1. **Auto-start**
-   ```bash
-    hl.on("hyprland.start", function()
-        hl.exec_cmd("python3 ~/scripts/infinite_desktop_core.py 1.6 > /tmp/infinite-desktop.log 2>&1")
+4. **Tambahkan konfigurasi ke `~/.config/hypr/hyprland.lua`:**
+   Buka file `hyprland.lua` Anda dan tambahkan baris berikut di akhir:
+   ```lua
+   -- >>> hyprland-infinite-desktop-v2 START
+   hl.on("hyprland.start", function()
+       hl.exec_cmd("python3 ~/scripts/infinite_desktop_core.py 1.6 > /tmp/infinite-desktop.log 2>&1")
    end)
+   dofile(os.getenv("HOME") .. "/scripts/infinite-shortcuts.lua")
+   -- <<< hyprland-infinite-desktop-v2 END
    ```
-2. **Keybindings**
-   Add these binds to enable keyboard navigation between your floating windows:
-   
-   ***(if you already have a bind that uses one of the required keys or for workspaces, replace them)***
+
+5. **Restart komputer atau sesi Hyprland Anda:**
    ```bash
-
-
-   local mainMod = "SUPER"
-
-   -- Workspaces
-   hl.bind(mainMod .. " + Z", hl.dsp.focus({ workspace = "-1" }))
-   hl.bind(mainMod .. " + X", hl.dsp.focus({ workspace = "+1" }))
-   hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.window.move({ workspace = "-1" }))
-   hl.bind(mainMod .. " + SHIFT + X", hl.dsp.window.move({ workspace = "+1" }))
-
-   -- Infinite desktop 
-   hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("python3 ~/scripts/floating_tile_toggle.py"))
-
-   hl.bind(mainMod .. " + left",  hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py left"))
-   hl.bind(mainMod .. " + right", hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py right"))
-   hl.bind(mainMod .. " + up",    hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py up"))
-   hl.bind(mainMod .. " + down",  hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py down"))
-
-   hl.bind(mainMod .. " + ALT + left",  hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py left"))
-   hl.bind(mainMod .. " + ALT + right", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py right"))
-   hl.bind(mainMod .. " + ALT + up",    hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py up"))
-   hl.bind(mainMod .. " + ALT + down",  hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py down"))
-
-   hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.exec_cmd("python3 ~/scripts/move_window.py left"),  { repeating = true })
-   hl.bind(mainMod .. " + SHIFT + right", hl.dsp.exec_cmd("python3 ~/scripts/move_window.py right"), { repeating = true })
-   hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.exec_cmd("python3 ~/scripts/move_window.py up"),    { repeating = true })
-   hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.exec_cmd("python3 ~/scripts/move_window.py down"),  { repeating = true })
-
-   hl.bind(mainMod .. " + CTRL + left",  hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py left"),  {    repeating = true })
-   hl.bind(mainMod .. " + CTRL + right", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py right"), { repeating = true })
-   hl.bind(mainMod .. " + CTRL + up",    hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py up"),    { repeating = true })
-   hl.bind(mainMod .. " + CTRL + down",  hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py down"),  { repeating = true })
+   reboot
    ```
 
-## 🖱️ How to use
+---
 
- **Workspaces:** Press ***SUPER + Z or X*** to change of workspaces.
- 
- **Panning:** Hold ***SUPER + ALT*** and move your mouse to slide the entire desktop.
- 
- **Navigation:** Press ***SUPER + Arrow Keys*** to center and focus the next floating/tiled window.
- 
- **Toggle floating/layout:** Press ***SUPER + D*** to toggle all windows floating/mosaic.
+## ⌨️ Panduan Penggunaan & Daftar Shortcut
 
- **Toggle floating/layout:** Press ***SUPER + V*** ti toggle one window flotating/mosaic.
+Semua shortcut menggunakan kombinasi **3+ tombol modifier** untuk menjamin **0% resiko bentrok** dengan tombol bawaan sistem atau aplikasi:
 
- **Rezize window:** Press/hold ***CTRL + SUPER + Arrow Keys*** to rezize windows.
+| Aksi / Fungsi | Tombol Shortcut | Keterangan |
+| :--- | :--- | :--- |
+| **🌊 Panning Kanvas** | Tahan **`SUPER + ALT`** + Geser Mouse | Menyeret seluruh jendela di kanvas desktop secara bersamaan |
+| **🎯 Recenter / Reset Kanvas** | **`SUPER + CTRL + ALT + 0`** | Menarik semua jendela kembali ke tengah monitor (*Home View*) |
+| **🔄 Alih Mode (Tiling / Floating)** | **`SUPER + CTRL + ALT + D`** | Beralih antara mode susun rapi dan mode kanvas bebas |
+| **🧭 Navigasi Antar-Jendela** | **`SUPER + CTRL + ALT + Panah`** | Memindahkan fokus kamera monitor ke jendela target |
+| **🖐️ Pindahkan Jendela Floating** | **`SUPER + CTRL + SHIFT + Panah`** | Menggeser jendela aktif di atas kanvas |
+| **🪟 Geser Posisi Jendela Tiled** | **`SUPER + ALT + SHIFT + Panah`** | Menukar posisi jendela saat berada di mode tiling |
+| **📐 Ubah Ukuran (Resize) Jendela** | **`SUPER + CTRL + ALT + SHIFT + Panah`** | Memperbesar atau memperkecil jendela floating |
+| **🗂️ Pindah Workspace Sebelumnya** | **`SUPER + CTRL + SHIFT + Z`** | Berpindah ke ruang kerja (*workspace*) sebelumnya |
+| **🗂️ Pindah Workspace Berikutnya** | **`SUPER + CTRL + SHIFT + X`** | Berpindah ke ruang kerja (*workspace*) berikutnya |
+| **📦 Lempar Jendela ke WS Prev** | **`SUPER + ALT + SHIFT + Z`** | Memindahkan jendela aktif ke workspace sebelumnya |
+| **📦 Lempar Jendela ke WS Next** | **`SUPER + ALT + SHIFT + X`** | Memindahkan jendela aktif ke workspace berikutnya |
 
- **Move windows:** Press/hold ***SHIFT + SUPER + Arrow Keys*** to move windows on floating.
+> **💡 Tips Kustomisasi:** Ingin mengganti kombinasi tombol? Cukup edit file `~/scripts/infinite-shortcuts.lua` lalu jalankan `hyprctl reload` di terminal!
 
- **Move tiled windows:** Press ***SUPER + ALT + Arrow Keys*** yo move tiled windows.
+---
+
+## 🛠️ Pemecahan Masalah (Troubleshooting)
+
+- **Kanvas tidak bergeser saat menahan `SUPER + ALT`:**
+  Periksa apakah user Anda sudah aktif di grup `input` dengan mengetik `groups` di terminal. Jika kata `input` belum ada, jalankan `sudo usermod -aG input $USER` lalu **reboot**.
+- **Memeriksa log background:**
+  Buka terminal dan jalankan:
+  ```bash
+  cat /tmp/infinite-desktop.log
+  ```
+- **Menguji kompabilitas API Hyprland:**
+  Jalankan alat diagnostik bawaan untuk memastikan dispatcher Hyprland Anda merespons dengan benar:
+  ```bash
+  bash ~/scripts/discover_hyprland_api.sh
+  ```
