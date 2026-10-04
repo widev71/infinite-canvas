@@ -13,7 +13,13 @@ def hyprctl_json(args, timeout=2):
     Estas NO pasan por el parser de dispatch, siguen funcionando igual
     que antes en Lua config."""
     r = _run(args + ["-j"], timeout=timeout)
-    return json.loads(r.stdout) if r.stdout.strip() else None
+    if not r.stdout.strip():
+        return None
+    try:
+        return json.loads(r.stdout)
+    except json.JSONDecodeError:
+        # hyprctl kadang mengembalikan teks error (bukan JSON), mis. saat reload.
+        return None
 
 
 def dispatch(lua_expr, timeout=2):

@@ -68,21 +68,23 @@ def main():
     new_x = wx + dx
     new_y = wy + dy
 
-    # Calcular cuánto espacio real queda antes del borde
+    # Calcular cuánto espacio real queda antes del borde.
+    # max(0, ...) : jika jendela sudah sebagian di luar layar, room bisa negatif
+    # dan membuat jendela bergerak ke arah yang berlawanan.
     if dx < 0:
-        room = wx - monitor["left"]
+        room = max(0, wx - monitor["left"])
         actual_dx = -min(STEP, room)
     elif dx > 0:
-        room = monitor["right"] - (wx + ww)
+        room = max(0, monitor["right"] - (wx + ww))
         actual_dx = min(STEP, room)
     else:
         actual_dx = 0
 
     if dy < 0:
-        room = wy - monitor["top"]
+        room = max(0, wy - monitor["top"])
         actual_dy = -min(STEP, room)
     elif dy > 0:
-        room = monitor["bottom"] - (wy + wh)
+        room = max(0, monitor["bottom"] - (wy + wh))
         actual_dy = min(STEP, room)
     else:
         actual_dy = 0

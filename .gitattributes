@@ -1,0 +1,5 @@
+# Paksa LF untuk skrip agar tetap jalan di Linux walau di-commit dari Windows.
+*.sh  text eol=lf
+*.py  text eol=lf
+*.lua text eol=lf
+*.md  text eol=lf

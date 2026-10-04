@@ -22,7 +22,7 @@ require_cmd() {
 
 # 1. Deteksi distro dan instal dependensi
 install_packages() {
-    log "Mendeteksi distro dan menginstal paket yang diperlukan (python, python-evdev, bash, jq)..."
+    log "Mendeteksi distro dan menginstal paket yang diperlukan (python3, python-evdev)..."
 
     if [ -f /etc/os-release ]; then
         # shellcheck disable=SC1091
@@ -35,15 +35,15 @@ install_packages() {
     fi
 
     if [[ "$DISTRO_ID" == "arch" || "$DISTRO_LIKE" == *arch* ]]; then
-        sudo pacman -S --needed --noconfirm python python-evdev bash jq
+        sudo pacman -S --needed --noconfirm python python-evdev
     elif [[ "$DISTRO_ID" == "fedora" || "$DISTRO_LIKE" == *fedora* ]]; then
-        sudo dnf install -y python python-evdev bash jq
+        sudo dnf install -y python3 python3-evdev
     elif [[ "$DISTRO_ID" == "ubuntu" || "$DISTRO_ID" == "debian" || "$DISTRO_LIKE" == *debian* ]]; then
         sudo apt update
-        sudo apt install -y python3 python3-evdev bash jq
+        sudo apt install -y python3 python3-evdev
     else
         warn "Tidak dapat mengenali distro Anda secara otomatis (ID=$DISTRO_ID)."
-        warn "Silakan instal manual: python3, python-evdev, bash, jq"
+        warn "Silakan instal manual: python3, python-evdev"
     fi
     ok "Paket berhasil diinstal (atau sudah terpasang)."
 }
@@ -101,8 +101,18 @@ install_scripts() {
 # 4. Patch hyprland.lua (autostart + import file shortcut terpusat)
 patch_hyprland_config() {
     log "Memperbarui ${HYPR_LUA} (autostart + shortcut)..."
-    mkdir -p "$(dirname "${HYPR_LUA}")"
-    touch "${HYPR_LUA}"
+
+    # JANGAN membuat hyprland.lua baru. Kalau user masih memakai hyprland.conf,
+    # file .lua kosong bisa membuat config lamanya tidak terbaca.
+    if [ ! -f "${HYPR_LUA}" ]; then
+        err "${HYPR_LUA} tidak ditemukan."
+        if [ -f "${HOME}/.config/hypr/hyprland.conf" ]; then
+            err "Anda masih memakai hyprland.conf (format lama). Plugin ini butuh config Lua (Hyprland >= 0.55)."
+        fi
+        err "Skrip sudah tersalin ke ${SCRIPTS_DEST}, tapi config TIDAK diubah."
+        err "Tambahkan blok konfigurasi secara manual (lihat README, langkah instalasi manual no. 4)."
+        exit 1
+    fi
 
     if grep -q "infinite-shortcuts.lua" "${HYPR_LUA}"; then
         warn "hyprland.lua tidak dimodifikasi (konfigurasi sudah terpasang sebelumnya)."

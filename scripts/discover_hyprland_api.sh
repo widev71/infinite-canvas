@@ -28,12 +28,12 @@ echo "== Jendela aktif: $ADDR =="
 echo
 
 echo "== Menguji pergeseran ke (100, 100) dengan sintaks yang digunakan hypr_ipc.py =="
-OUT=$(hyprctl dispatch "hl.dsp.window.move({ window = \"address:$ADDR\", coords = { 100, 100 }, mode = \"exact\" })" 2>&1)
+OUT=$(hyprctl dispatch "hl.dsp.window.move({ window = \"address:$ADDR\", x = 100, y = 100, relative = false })" 2>&1)
 echo "$OUT"
 if echo "$OUT" | grep -qi "error"; then
     echo
     echo "-> Gagal. Coba variasi berikut secara manual dan lihat mana yang tidak error:"
-    echo "   hyprctl dispatch 'hl.dsp.window.move({ window = \"address:$ADDR\", x = 100, y = 100 })'"
+    echo "   hyprctl dispatch 'hl.dsp.window.move({ window = \"address:$ADDR\", coords = { 100, 100 }, mode = \"exact\" })'"
     echo "   hyprctl dispatch 'hl.dsp.window.move({ window = \"address:$ADDR\", coords = {x=100, y=100} })'"
     echo "   hyprctl dispatch 'hl.dsp.window.move({ window = \"address:$ADDR\", position = {100, 100} })'"
 else
@@ -44,14 +44,13 @@ else
 fi
 echo
 
-echo "== Menguji pengubahan ukuran (resize) ke 800x600 =="
-OUT=$(hyprctl dispatch "hl.dsp.window.resize({ window = \"address:$ADDR\", size = { 800, 600 }, mode = \"exact\" })" 2>&1)
+echo "== Menguji pengubahan ukuran (resize) ke 800x600 dengan sintaks hypr_ipc.py =="
+OUT=$(hyprctl dispatch "hl.dsp.window.resize({ window = \"address:$ADDR\", x = 800, y = 600, relative = false })" 2>&1)
 echo "$OUT"
 if echo "$OUT" | grep -qi "error"; then
     echo
-    echo "-> Gagal. 'resize' mungkin tidak ada sebagai dispatcher terpisah. Periksa"
-    echo "   daftar di atas (hl.dsp.window.*) dan uji apakah 'move' juga menerima"
-    echo "   parameter 'size' di panggilan yang sama, misal:"
+    echo "-> Gagal. Coba variasi berikut secara manual dan lihat mana yang tidak error:"
+    echo "   hyprctl dispatch 'hl.dsp.window.resize({ window = \"address:$ADDR\", size = { 800, 600 }, mode = \"exact\" })'"
     echo "   hyprctl dispatch 'hl.dsp.window.move({ window = \"address:$ADDR\", size = {800,600} })'"
 else
     echo "-> OK. Periksa secara visual apakah ukuran jendela sekarang menjadi 800x600."

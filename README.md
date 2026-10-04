@@ -22,12 +22,10 @@ Skrip cerdas untuk mengubah workspace **Hyprland** Anda menjadi sebuah **kanvas 
 
 Sebelum memasang, pastikan sistem Anda memenuhi kebutuhan berikut:
 
-1. **Lingkungan Desktop:** Linux dengan compositor **Hyprland** (disarankan v0.55+ dengan konfigurasi `hyprland.lua` atau dukungan soket IPC).
+1. **Lingkungan Desktop:** Linux dengan compositor **Hyprland v0.55+** yang **sudah memakai config Lua** (`~/.config/hypr/hyprland.lua` sudah ada). Kalau Anda masih memakai `hyprland.conf`, migrasikan dulu. Installer akan berhenti dan tidak mengubah apa pun jika `hyprland.lua` tidak ditemukan.
 2. **Paket Ketergantungan:**
    - `python3` (penerjemah kode utama)
    - `python-evdev` (pembaca input perangkat mouse/keyboard tingkat rendah)
-   - `bash` (shell interpreter)
-   - `jq` (pemroses JSON data Hyprland)
 3. **Izin Grup Perangkat (`input` group):** User Anda harus terdaftar di dalam grup sistem `input` agar skrip Python memiliki izin membaca pergerakan mouse/keyboard tanpa memerlukan akses root.
 
 ---
@@ -44,6 +42,10 @@ Harap perhatikan pantangan berikut agar sistem Anda tidak mengalami error:
    * *Alasan:* Konfigurasi `hyprland.lua` memanggil skrip dari path absolut `~/scripts/`. Jika dipindahkan, Hyprland tidak akan menemukan skripnya.
 4. ❌ **JANGAN gunakan shortcut 1-2 tombol umum jika mengubah keybind!**
    * *Alasan:* Shortcut seperti `SUPER + 1..9`, `SUPER + D`, atau `SUPER + Panah` adalah tombol bawaan sistem operasi. Gunakan minimal 3 modifier (contoh: `SUPER + CTRL + ALT + ...`) untuk mencegah bentrok fungsi.
+5. ❌ **JANGAN tambahkan `require("hyprland")` di `infinite-shortcuts.lua` atau file Lua lain yang dimuat dari config!**
+   * *Alasan:* `hl` sudah disediakan global oleh Hyprland. `require("hyprland")` justru memuat ulang `hyprland.lua` Anda sendiri tanpa henti dan menghasilkan error `C stack overflow`.
+6. ❌ **JANGAN jalankan dua instans `infinite_desktop_core.py` sekaligus!**
+   * *Alasan:* Program ini sudah otomatis jalan saat Hyprland start. Instans kedua membuat kanvas bergeser 2x lipat. Cek dengan `pgrep -af infinite_desktop_core`.
 
 ---
 
@@ -80,15 +82,15 @@ Jika Anda ingin mengatur semuanya secara manual tanpa skrip otomatis:
 1. **Instal paket sesuai distro Anda:**
    * **Arch Linux:**
      ```bash
-     sudo pacman -S --needed python python-evdev bash jq
+     sudo pacman -S --needed python python-evdev
      ```
    * **Fedora:**
      ```bash
-     sudo dnf install -y python python-evdev bash jq
+     sudo dnf install -y python3 python3-evdev
      ```
    * **Ubuntu / Debian:**
      ```bash
-     sudo apt update && sudo apt install -y python3 python3-evdev bash jq
+     sudo apt update && sudo apt install -y python3 python3-evdev
      ```
 
 2. **Tambahkan user Anda ke grup `input`:**
@@ -141,10 +143,43 @@ Semua shortcut menggunakan kombinasi **3+ tombol modifier** untuk menjamin **0% 
 
 > **💡 Tips Kustomisasi:** Ingin mengganti kombinasi tombol? Cukup edit file `~/scripts/infinite-shortcuts.lua` lalu jalankan `hyprctl reload` di terminal!
 
+> **ℹ️ Catatan:** Panning hanya aktif saat **`SUPER + ALT` ditekan tanpa `CTRL`/`SHIFT`**. Jadi menekan shortcut `SUPER + CTRL + ALT + ...` tidak akan ikut menggeser kanvas.
+
+---
+
+## 🧪 Cara Tes Setelah Instalasi
+
+1. **Pastikan tidak ada error config:**
+   ```bash
+   hyprctl configerrors
+   ```
+   Harus kosong. Kalau masih ada error, lihat bagian Troubleshooting.
+2. **Pastikan sudah masuk grup `input`:**
+   ```bash
+   groups | grep -o input
+   ```
+3. **Pastikan program utama berjalan:**
+   ```bash
+   pgrep -af infinite_desktop_core
+   ```
+   Kalau kosong, jalankan manual agar error-nya terlihat:
+   ```bash
+   ~/scripts/infinite-desktop.sh
+   ```
+   Harus muncul `Infinite Desktop aktif...` serta `[+] Keyboard terdeteksi` / `[+] Mouse terdeteksi`.
+4. **Buka 2–3 aplikasi** di satu workspace, lalu tekan **`SUPER + CTRL + ALT + D`** untuk mengubah semuanya jadi floating.
+5. **Tes panning:** tahan **`SUPER + ALT`** sambil menggerakkan mouse. Semua jendela floating harus ikut bergeser.
+6. **Tes recenter:** tekan **`SUPER + CTRL + ALT + 0`**.
+
 ---
 
 ## 🛠️ Pemecahan Masalah (Troubleshooting)
 
+- **Error `C stack overflow` / `attempt to index a nil value (field 'dsp')`:**
+  Anda memakai `infinite-shortcuts.lua` versi lama yang berisi `require("hyprland")`. Perbarui repo (`git pull`) lalu jalankan installer lagi, atau hapus barisnya secara manual:
+  ```bash
+  sed -i '/require("hyprland")/d' ~/scripts/infinite-shortcuts.lua && hyprctl reload
+  ```
 - **Kanvas tidak bergeser saat menahan `SUPER + ALT`:**
   Periksa apakah user Anda sudah aktif di grup `input` dengan mengetik `groups` di terminal. Jika kata `input` belum ada, jalankan `sudo usermod -aG input $USER` lalu **reboot**.
 - **Memeriksa log background:**

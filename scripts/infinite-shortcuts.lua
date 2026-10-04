@@ -2,7 +2,13 @@
 -- Semua shortcut menggunakan 3 kombinasi tombol modifier (SUPER + 2 tombol) agar 100% bebas bentrok.
 -- Silakan ubah shortcut di bawah jika ingin menyesuaikan dengan preferensi Anda.
 
-local hl = require("hyprland")
+-- PENTING: JANGAN me-require modul "hyprland" di sini.
+-- `hl` sudah disediakan global oleh Hyprland. Me-require "hyprland" malah akan
+-- memuat ulang ~/.config/hypr/hyprland.lua secara rekursif -> "C stack overflow".
+if hl == nil then
+    error("infinite-shortcuts.lua harus dimuat dari hyprland.lua (global 'hl' tidak ditemukan)")
+end
+
 local mainMod = "SUPER"
 
 -- ========== WORKSPACE (SUPER + CTRL + SHIFT) ==========

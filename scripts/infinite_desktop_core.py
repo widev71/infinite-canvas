@@ -20,6 +20,7 @@ EV_KEY=1; EV_REL=2; REL_X=0; REL_Y=1
 KEY_LEFTMETA=125; KEY_RIGHTMETA=126
 KEY_LEFTALT=56; KEY_RIGHTALT=100
 KEY_LEFTCTRL=29; KEY_RIGHTCTRL=97
+KEY_LEFTSHIFT=42; KEY_RIGHTSHIFT=54
 KEY_LEFT=105; KEY_RIGHT=106
 KEY_UP=103; KEY_DOWN=108
 BTN_LEFT=272
@@ -30,7 +31,13 @@ PROTECTED_APPS = ['brave-browser', 'chromium', 'chromium-browser', 'google-chrom
                   'opera', 'microsoft-edge']
 
 lock = threading.Lock()
-super_pressed=False; alt_pressed=False; ctrl_pressed=False; btn_left=False
+super_pressed=False; alt_pressed=False; ctrl_pressed=False; shift_pressed=False; btn_left=False
+
+def is_pan_combo():
+    """Panning kanvas HANYA aktif saat SUPER+ALT ditekan TANPA CTRL/SHIFT.
+    Tanpa syarat ini, shortcut SUPER+CTRL+ALT+... dan SUPER+ALT+SHIFT+...
+    ikut menggeser kanvas kalau mouse bergerak sedikit. Panggil di dalam lock."""
+    return super_pressed and alt_pressed and not ctrl_pressed and not shift_pressed
 acc_x=0.0; acc_y=0.0
 frame_held_hidden=False  # último estado notificado a quickshell (evita spam de llamadas ipc)
 
@@ -179,7 +186,7 @@ def monitor_window_drag():
     while True:
         try:
             with lock:
-                is_dragging = super_pressed and btn_left and not alt_pressed and not ctrl_pressed
+                is_dragging = super_pressed and btn_left and not alt_pressed and not ctrl_pressed and not shift_pressed
                 mouse_dx = mouse_rel_x
                 mouse_dy = mouse_rel_y
                 mouse_rel_x = 0
@@ -338,7 +345,7 @@ def scan_devices():
 
 def kbd_reader_device(path):
     """Lee eventos de UN teclado especifico. Se lanza un hilo por cada teclado detectado."""
-    global super_pressed, alt_pressed, ctrl_pressed, frame_held_hidden
+    global super_pressed, alt_pressed, ctrl_pressed, shift_pressed, frame_held_hidden
     try:
         fd = open(path, 'rb')
     except Exception:
@@ -365,8 +372,10 @@ def kbd_reader_device(path):
                 alt_pressed = (value == 1)
             elif code in (KEY_LEFTCTRL, KEY_RIGHTCTRL):
                 ctrl_pressed = (value == 1)
+            elif code in (KEY_LEFTSHIFT, KEY_RIGHTSHIFT):
+                shift_pressed = (value == 1)
 
-            combo = super_pressed and alt_pressed
+            combo = is_pan_combo()
             if combo != frame_held_hidden:
                 frame_held_hidden = combo
                 notify_state = combo
@@ -410,7 +419,7 @@ def mouse_reader_device(path):
                 elif code == REL_Y:
                     mouse_rel_y += value
 
-                if super_pressed and alt_pressed:
+                if is_pan_combo():
                     sign = -1 if read_inverted() else 1
                     if code == REL_X:
                         acc_x += value * speed * sign
@@ -480,9 +489,10 @@ threading.Thread(target=device_manager, daemon=True).start()
 threading.Thread(target=monitor_window_drag, daemon=True).start()
 print("Infinite Desktop aktif (deteksi perangkat otomatis)", flush=True)
 print("Super+Klik: Seret jendela (saat menyentuh tepi layar, mouse menggeser kanvas desktop)", flush=True)
-print("Super+Alt+Mouse: Seret seluruh kanvas desktop", flush=True)
-print("Super+Panah: Navigasi jendela via hyprland bind", flush=True)
-print("Super+Shift+Panah: Geser jendela aktif via hyprland bind", flush=True)
+print("Super+Alt+Mouse (tanpa Ctrl/Shift): Seret seluruh kanvas desktop", flush=True)
+print("Super+Ctrl+Alt+Panah: Navigasi jendela via hyprland bind", flush=True)
+print("Super+Ctrl+Shift+Panah: Geser jendela floating via hyprland bind", flush=True)
+print("Super+Ctrl+Alt+0: Pusatkan ulang kanvas", flush=True)
 
 # Caché del workspace activo (se refresca cada 2s para no llamar hyprctl cada frame)
 _cached_workspace_id = None
@@ -514,7 +524,7 @@ while True:
     time.sleep(0.016)
 
     with lock:
-        active_drag = super_pressed and alt_pressed
+        active_drag = is_pan_combo()
         input_dx = acc_x
         input_dy = acc_y
         acc_x = 0.0
